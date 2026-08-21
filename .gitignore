@@ -3,6 +3,8 @@ CLAUDE.md
 CLAUDE.local.md
 .mcp.json
 node_modules
+.idea
+antivibe
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
