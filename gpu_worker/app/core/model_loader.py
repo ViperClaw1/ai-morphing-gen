@@ -15,7 +15,14 @@ class ModelLoadError(RuntimeError):
 
 
 class ModelLoader:
-    """Singleton Stable Diffusion 1.5 img2img pipeline loader."""
+    """Singleton Stable Diffusion 1.5 img2img pipeline loader.
+
+    Plain img2img only — no ControlNet conditioning yet, though
+    docs/phase0_environment_setup.md already locked ControlNet (canny/openpose)
+    as the identity-consistency method for 1.2. Tracked as a follow-up, not
+    implemented here: swapping to StableDiffusionControlNetImg2ImgPipeline needs
+    a conditioning-image preprocessor, a new dependency, and new request params.
+    """
 
     _instance: "ModelLoader | None" = None
 

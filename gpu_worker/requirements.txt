@@ -1,3 +1,9 @@
+# Production/Docker deps for the real CUDA worker (torch installed separately, see
+# bottom of this file). Never pip-install this together with requirements-dev.txt in
+# the same environment: xformers here requires torch==2.4.0, while requirements-dev.txt
+# pins torch==2.3.1 for its CPU-only local test setup — combined, pip's resolver has no
+# valid solution. For local testing without a GPU, use requirements-dev.txt ALONE.
+
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
 

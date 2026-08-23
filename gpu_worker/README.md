@@ -49,9 +49,59 @@ gpu_worker/
 ├── tests/
 ├── Dockerfile
 ├── requirements.txt
+├── requirements-dev.txt          # CPU-only, no-xformers — local test env, no GPU needed
 ├── .env.example
 └── README.md
 ```
+
+---
+
+## Local testing without a GPU
+
+`assert_cuda_available()` (`app/utils/cuda_utils.py`) makes the app refuse to boot
+without a real CUDA device — that's intentional (see `CLAUDE.md`: no CPU inference
+fallback), not a bug. It means you **cannot** run `uvicorn app.main:app` directly on a
+machine with no NVIDIA GPU.
+
+What you *can* do without a GPU, and should do before ever touching RunPod: exercise
+every response branch of `POST /repair` — success shape, validation errors (bad MIME,
+oversized image, invalid params), timeout, CUDA OOM, model-not-loaded, unexpected
+failure — against the real FastAPI route, with CUDA checks and model loading stubbed
+out and only the GPU call itself mocked. That's what `tests/test_repair_route.py` does,
+per `.claude/rules/testing.md`'s "GPU worker calls must be mocked in unit tests" rule.
+`tests/test_image_validation.py` covers the pure validation logic the same way.
+
+### 1. Create a CPU-only venv
+
+```bash
+cd gpu_worker
+python3.10 -m venv .venv
+source .venv/bin/activate   # .venv\Scripts\activate on Windows
+pip install -r requirements-dev.txt
+```
+
+No model download, no `.env` setup, no Docker, no GPU driver needed for this path.
+
+### 2. Run the test suite
+
+```bash
+pytest -v
+```
+
+This runs both the no-GPU validation tests and the mocked `/repair` contract tests.
+Nothing here loads the real SD1.5 pipeline or touches CUDA — `ModelLoader.load()` and
+`assert_cuda_available()` are monkeypatched to no-ops in `tests/test_repair_route.py`'s
+`client` fixture, and the GPU call itself (`run_repair`/`run_with_timeout`) is
+monkeypatched per test to return canned results or raise the specific error being
+tested.
+
+### 3. What this does *not* cover
+
+Real model quality, real VRAM/OOM limits, and actual cold-start/inference latency
+(still an open item in `docs/implementation_plan.md`'s risk table) all require a real
+CUDA GPU — either a rented box or the eventual RunPod endpoint. Use the "Local launch"
+section below once you have GPU access, or point a real `.env` at a RunPod sandbox
+endpoint per `CLAUDE.local.md`.
 
 ---
 
@@ -215,10 +265,8 @@ Error response (no stack traces):
 
 ### Run tests (no GPU required)
 
-```bash
-pip install pytest
-pytest
-```
+See "Local testing without a GPU" above for the full no-GPU setup
+(`requirements-dev.txt` + `pytest -v`).
 
 ---
 
