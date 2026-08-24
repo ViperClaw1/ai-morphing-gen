@@ -38,6 +38,23 @@ uvicorn app.main:app --reload
 Redis is only required once RQ jobs are actually enqueued (§1.4+) — the skeleton boots
 and `/settings/public` works without it.
 
+## Deploying to Railway
+
+`Dockerfile` builds the app; `railway.toml` points Railway at it and healthchecks
+`/settings/public` (the only route with no DB/Redis dependency). One image, two Railway
+services:
+
+- **web** — uses the Dockerfile's default `CMD` as-is.
+- **worker** — same repo/image, but override its Start Command in the Railway service
+  settings to `rq worker preview_gpu full_gpu --url $REDIS_URL` (the `rq` CLI reads
+  `RQ_REDIS_URL`, not `REDIS_URL`, so this must be passed explicitly via `--url`).
+
+Both services need: Railway Redis add-on attached (provides `REDIS_URL`), a volume
+mounted (e.g. `/data`) with `SQLITE_PATH=/data/app.db` and `STORAGE_PATH=/data/storage`
+so the DB and any transient files survive redeploys, plus `RUNPOD_API_KEY`,
+`RUNPOD_ENDPOINT_ID`, the R2 credentials, and `CORS_ALLOWED_ORIGINS` set to the deployed
+frontend URL — see `app/core/config.py` for the full list.
+
 ## Tests
 
 ```bash

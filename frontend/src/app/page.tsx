@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { HeroSlideshow } from "@/components/HeroSlideshow";
 
 const STEPS = [
   {
@@ -22,29 +23,34 @@ const STEPS = [
 export default function Home() {
   return (
     <>
-      <section className="mx-auto flex max-w-5xl flex-col items-start gap-8 px-6 py-28 sm:py-36">
-        <p className="font-mono text-xs tracking-widest text-foreground/60 uppercase">
-          AI face-morph video generator
-        </p>
-        <h1 className="max-w-3xl font-mono text-4xl leading-tight font-medium tracking-tight sm:text-6xl sm:leading-tight">
-          Turn a sequence of photos into one morphing video.
-        </h1>
-        <p className="max-w-xl text-base text-foreground/70 sm:text-lg">
-          Upload your face photos in order. We warp, blend, and AI-repair between every frame into a short
-          cinematic video — free to preview, one payment to render in full.
-        </p>
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            size="lg"
-            className="h-11 px-6 font-mono uppercase tracking-wide"
-            render={<Link href="/new">Start morphing</Link>}
-          />
-          <Button
-            variant="outline"
-            size="lg"
-            className="h-11 px-6 font-mono uppercase tracking-wide"
-            render={<Link href="#how-it-works">See how it works</Link>}
-          />
+      <section className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-12 px-6 py-28 sm:py-36 lg:grid-cols-2 lg:gap-8">
+        <div className="flex flex-col items-start gap-8">
+          <p className="font-mono text-xs tracking-widest text-foreground/60 uppercase">
+            AI face-morph video generator
+          </p>
+          <h1 className="max-w-3xl font-mono text-4xl leading-tight font-medium tracking-tight sm:text-6xl sm:leading-tight">
+            Turn a sequence of photos into one morphing video.
+          </h1>
+          <p className="max-w-xl text-base text-foreground/70 sm:text-lg">
+            Upload your face photos in order. We warp, blend, and AI-repair between every frame into a short
+            cinematic video — free to preview, one payment to render in full.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              size="lg"
+              className="h-11 px-6 font-mono uppercase tracking-wide"
+              render={<Link href="/new">Start morphing</Link>}
+            />
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-11 px-6 font-mono uppercase tracking-wide"
+              render={<Link href="#how-it-works">See how it works</Link>}
+            />
+          </div>
+        </div>
+        <div className="flex justify-center lg:justify-end">
+          <HeroSlideshow />
         </div>
       </section>
 

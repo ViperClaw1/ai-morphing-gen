@@ -11,7 +11,6 @@ export function Nav() {
         <Button
           size="sm"
           className="font-mono uppercase tracking-wide"
-          nativeButton={false}
           render={<Link href="/new">Start morphing</Link>}
         />
       </div>

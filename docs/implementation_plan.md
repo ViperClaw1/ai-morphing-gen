@@ -12,14 +12,14 @@ Full step-by-step setup path and complete environment-variable inventory: [`docs
 - [x] Choose landmark detection library: **MediaPipe** (Apache 2.0 — InsightFace's model zoo is non-commercial-only, a licensing risk for a paid product)
 - [x] Choose identity-consistency method: **ControlNet** (canny/openpose) — IP-Adapter FaceID and InstantID both depend on InsightFace's non-commercial-licensed embedding models, rejected for the same reason
 - [x] Decide SQLite (fast start) vs Postgres (from day 1): **SQLite** for MVP, migrate in Phase 2 (per §1.1)
-- [ ] Register domain, set up Vercel account, set up VPS: **Hetzner** chosen as provider
+- [ ] Register domain, set up Vercel account, set up Railway project (web + worker services, Redis add-on, volume for SQLite)
 
 ---
 
 ## Phase 1 — MVP Core Loop (Target: 4-6 weeks)
 
 ### 1.1 Infrastructure Setup
-- VPS provisioning (Hetzner/DigitalOcean, not local machine)
+- Railway provisioning (not local machine): one project, `web` service (FastAPI) + `worker` service (RQ) from the same repo/image, Railway Redis add-on, volume mounted for SQLite
 - FastAPI backend skeleton: `app/main.py`, routers structure per original spec
   - `app/api/routes/{projects,uploads,jobs,preview,billing,settings}.py`
 - RQ (Redis Queue) instead of Celery — simpler worker setup
