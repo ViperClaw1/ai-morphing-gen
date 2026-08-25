@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HeroSlideshow } from "@/components/HeroSlideshow";
+import { AgeMorphSlider } from "@/components/AgeMorphSlider";
 
 const STEPS = [
   {
@@ -66,6 +67,22 @@ export default function Home() {
               <p className="text-sm text-foreground/70">{step.body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="border-t border-border">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-10 px-6 py-24 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <p className="font-mono text-xs tracking-widest text-foreground/60 uppercase">One face, every age</p>
+            <h2 className="max-w-xl font-mono text-2xl tracking-tight sm:text-3xl">
+              Drag the slider. Watch 40 years pass in one frame.
+            </h2>
+            <p className="max-w-md text-sm text-foreground/70">
+              The same AI face-repair engine that powers your morph video can age a face forward or backward —
+              scrub from 20 to 60 and see every year in between.
+            </p>
+          </div>
+          <AgeMorphSlider />
         </div>
       </section>
 
