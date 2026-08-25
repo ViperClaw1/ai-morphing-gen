@@ -1,7 +1,24 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HeroSlideshow } from "@/components/HeroSlideshow";
-import { AgeMorphSlider } from "@/components/AgeMorphSlider";
+import { FaceMorphSlider } from "@/components/FaceMorphSlider";
+import { SwitcherMorph } from "@/components/SwitcherMorph";
+
+const HAIR_OPTIONS = [
+  { key: "short", label: "Short" },
+  { key: "ear-length", label: "Ear length" },
+  { key: "medium", label: "Medium" },
+  { key: "shoulder", label: "Shoulder" },
+  { key: "long", label: "Long" },
+];
+
+const SMILE_OPTIONS = [
+  { key: "neutral", label: "Neutral" },
+  { key: "soft", label: "Soft" },
+  { key: "slight-smile", label: "Slight" },
+  { key: "smile", label: "Smile" },
+  { key: "big-smile", label: "Big smile" },
+];
 
 const STEPS = [
   {
@@ -82,7 +99,55 @@ export default function Home() {
               scrub from 20 to 60 and see every year in between.
             </p>
           </div>
-          <AgeMorphSlider />
+          <FaceMorphSlider folder="age-morph" min={20} max={60} step={10} label="AGE" />
+        </div>
+      </section>
+
+      <section className="border-t border-border">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-10 px-6 py-24 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <p className="font-mono text-xs tracking-widest text-foreground/60 uppercase">One face, every side</p>
+            <h2 className="max-w-xl font-mono text-2xl tracking-tight sm:text-3xl">
+              Turn the dial. Watch the same face rotate.
+            </h2>
+            <p className="max-w-md text-sm text-foreground/70">
+              Our repair engine holds a face steady across viewpoints too — scrub from straight-on to a 40°
+              turn and see the geometry hold up at every angle.
+            </p>
+          </div>
+          <FaceMorphSlider folder="angle" min={0} max={40} step={10} unit="°" label="ANGLE" />
+        </div>
+      </section>
+
+      <section className="border-t border-border">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-10 px-6 py-24 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <p className="font-mono text-xs tracking-widest text-foreground/60 uppercase">One face, every length</p>
+            <h2 className="max-w-xl font-mono text-2xl tracking-tight sm:text-3xl">
+              Tap through. Same face, five hairstyles.
+            </h2>
+            <p className="max-w-md text-sm text-foreground/70">
+              Hair is the hardest thing to keep consistent across a morph — our engine reconstructs it cleanly at
+              every length, from a short crop to long waves.
+            </p>
+          </div>
+          <SwitcherMorph folder="hair" options={HAIR_OPTIONS} altSuffix="hair" />
+        </div>
+      </section>
+
+      <section className="border-t border-border">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-10 px-6 py-24 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <p className="font-mono text-xs tracking-widest text-foreground/60 uppercase">One face, every mood</p>
+            <h2 className="max-w-xl font-mono text-2xl tracking-tight sm:text-3xl">
+              Tap through. Same face, five expressions.
+            </h2>
+            <p className="max-w-md text-sm text-foreground/70">
+              Expression is often the first thing that breaks in a morph — our engine keeps the smile honest, from
+              neutral all the way to a full grin.
+            </p>
+          </div>
+          <SwitcherMorph folder="smile" options={SMILE_OPTIONS} altSuffix="expression" />
         </div>
       </section>
 
