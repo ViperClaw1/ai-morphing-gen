@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     model_id: str = "runwayml/stable-diffusion-v1-5"
+    # fp16 variant only — half the download/disk size of the default fp32 weights, and
+    # matches torch_dtype=float16 below. The Dockerfile's snapshot_download must fetch this
+    # same variant (see its allow_patterns) or local_files_only=True will fail to find it.
+    model_variant: str = "fp16"
     model_cache_dir: Path = Field(default=Path("/app/models"))
     hf_home: Path = Field(default=Path("/app/models"))
 

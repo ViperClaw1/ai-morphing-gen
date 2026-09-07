@@ -130,8 +130,23 @@ pip install -r requirements.txt
 ```bash
 export HF_HOME=./models
 export LOCAL_FILES_ONLY=false
-python -c "from huggingface_hub import snapshot_download; snapshot_download('runwayml/stable-diffusion-v1-5', cache_dir='./models')"
+python -c "
+from huggingface_hub import snapshot_download
+snapshot_download(
+    'runwayml/stable-diffusion-v1-5',
+    cache_dir='./models',
+    allow_patterns=[
+        'model_index.json', 'scheduler/*.json', 'tokenizer/*',
+        'text_encoder/*.json', 'text_encoder/*.fp16.safetensors',
+        'vae/*.json', 'vae/*.fp16.safetensors',
+        'unet/*.json', 'unet/*.fp16.safetensors',
+        'feature_extractor/*.json',
+    ],
+)
+"
 ```
+
+fp16-variant weights only (~2GB) — the full repo is 10GB+ of redundant fp32 weights, `.ckpt` monoliths, and an unused safety-checker model. `model_loader.py` loads with `variant="fp16"`, so nothing else is ever read.
 
 ### 4. Configure environment
 

@@ -32,7 +32,11 @@ RUN pip install --upgrade pip \
 COPY app /app/app
 COPY .env.example /app/.env.example
 
-# Pre-download Stable Diffusion 1.5 during image build (not at runtime)
+# Pre-download Stable Diffusion 1.5 during image build (not at runtime).
+# fp16-variant weights only (model_loader.py loads with variant="fp16") — the full repo
+# is ~10GB+ across redundant fp32 weights, .ckpt monoliths, and the unused safety checker
+# (safety_checker=None in model_loader.py); this filter cuts it to the ~2GB actually used,
+# which also means a dropped connection costs minutes to retry, not hours.
 RUN mkdir -p /app/models \
     && python -c "\
 from huggingface_hub import snapshot_download; \
@@ -40,6 +44,18 @@ snapshot_download(\
     'runwayml/stable-diffusion-v1-5',\
     cache_dir='/app/models',\
     local_files_only=False,\
+    allow_patterns=[\
+        'model_index.json',\
+        'scheduler/*.json',\
+        'tokenizer/*',\
+        'text_encoder/*.json',\
+        'text_encoder/*.fp16.safetensors',\
+        'vae/*.json',\
+        'vae/*.fp16.safetensors',\
+        'unet/*.json',\
+        'unet/*.fp16.safetensors',\
+        'feature_extractor/*.json',\
+    ],\
 )"
 
 RUN groupadd --gid 1000 worker \

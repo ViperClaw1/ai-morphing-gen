@@ -71,6 +71,7 @@ class ModelLoader:
             pipeline = StableDiffusionImg2ImgPipeline.from_pretrained(
                 cfg.model_id,
                 torch_dtype=torch.float16,
+                variant=cfg.model_variant,
                 safety_checker=None,
                 requires_safety_checker=False,
                 cache_dir=cache_dir,
