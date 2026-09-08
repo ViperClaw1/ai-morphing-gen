@@ -10,6 +10,10 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        # This Settings class has real fields starting with "model_" (model_id,
+        # model_variant, model_cache_dir) — clear pydantic's own reserved "model_"
+        # namespace so it stops warning about the collision.
+        protected_namespaces=(),
     )
 
     app_name: str = "AI Morphing GPU Worker"

@@ -1,4 +1,5 @@
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,16 +7,27 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app import models  # noqa: F401 — registers tables on Base.metadata before create_all()
 from app.api.routes import billing, jobs, preview, projects, uploads
 from app.api.routes import settings as settings_routes
 from app.core.config import get_settings
+from app.core.db import Base, engine
 from app.core.errors import AppError
 from app.core.logging import configure_logging
 
 configure_logging()
 app_settings = get_settings()
 
-app = FastAPI(title=app_settings.app_name)
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # create_all() is a no-op for tables that already exist — fine for SQLite/MVP.
+    # Swap for Alembic migrations when Phase 2 moves to Postgres (docs/implementation_plan.md §2.1).
+    Base.metadata.create_all(bind=engine)
+    yield
+
+
+app = FastAPI(title=app_settings.app_name, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

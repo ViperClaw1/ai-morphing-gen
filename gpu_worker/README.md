@@ -171,13 +171,17 @@ Model loads **once** at startup. CPU inference is **not** supported.
 
 ## Docker launch
 
-Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
+**Native Linux**: requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed on the host.
+
+**Windows + Docker Desktop**: no toolkit install needed — GPU passthrough ships with Docker Desktop's WSL2 backend. Just make sure your NVIDIA driver is current (WSL2 CUDA support needs a reasonably recent driver) and that Docker Desktop is set to the WSL2 engine (Settings → General). `--gpus all` below works the same either way.
 
 ```bash
 cd gpu_worker
 docker build -t ai-morphing-gpu-worker .
 docker run --gpus all -p 8000:8000 --env-file .env.example ai-morphing-gpu-worker
 ```
+
+To point the backend at this local container instead of a RunPod endpoint, set `RUNPOD_ENDPOINT_URL=http://localhost:8000` in `backend/.env` once the backend's GPU-calling code exists (not yet built — see the integration plan).
 
 The image pre-downloads `runwayml/stable-diffusion-v1-5` at **build** time. Runtime uses `local_files_only=true`.
 

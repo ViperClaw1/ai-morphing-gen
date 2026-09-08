@@ -24,9 +24,13 @@ class Settings(BaseSettings):
     # RQ (Redis Queue) — not Celery, see CLAUDE.md architecture rules.
     redis_url: str = "redis://localhost:6379/0"
 
-    # GPU worker (RunPod serverless), provisioned in §1.2.
+    # GPU worker (RunPod serverless Load Balancing endpoint), provisioned in §1.2.
+    # runpod_endpoint_url is the full base URL RunPod hands you after creating the
+    # endpoint (e.g. https://<id>-8000.proxy.runpod.net) — gpu_client posts straight to
+    # f"{runpod_endpoint_url}/repair" with runpod_api_key as a Bearer token.
     runpod_api_key: str = ""
     runpod_endpoint_id: str = ""
+    runpod_endpoint_url: str = ""
 
     # Object storage — Cloudflare R2 (S3-compatible).
     storage_path: Path = Field(default=Path("./storage"))  # local dev fallback only
