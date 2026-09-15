@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     r2_bucket_name: str = ""
     r2_endpoint: str = ""
 
+    # morph_engine.py — auto-downloaded on first use if missing (see morph_engine.py's
+    # _get_landmarker()); ~3.7MB, unlike SD1.5 this needs no build-time preload step.
+    mediapipe_model_path: Path = Field(default=Path("./data/face_landmarker.task"))
+
     preview_enabled: bool = True
     preview_ttl_hours: int = 3
     preview_limit_per_project: int = 3

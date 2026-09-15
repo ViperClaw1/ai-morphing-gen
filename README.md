@@ -53,14 +53,14 @@ deep-dive/     AntiVibe-generated learning notes on this codebase
 
 ## Stack
 
-| Layer | Choice |
-|---|---|
-| Frontend | Next.js, TypeScript, TailwindCSS, Zustand, shadcn/ui |
-| Backend | Python 3.10, FastAPI, Uvicorn, RQ (Redis Queue) — not Celery |
-| DB | SQLite (Phase 1) → PostgreSQL (Phase 2) |
-| GPU worker | RunPod serverless, SD 1.5 + ControlNet, FFmpeg |
-| Storage | Cloudflare R2 (S3-compatible, zero egress) |
-| Payments | Payoneer Checkout / Stripe / TipTop Pay — provider TBD, see open risks |
+| Layer      | Choice                                                                 |
+| ---------- | ---------------------------------------------------------------------- |
+| Frontend   | Next.js, TypeScript, TailwindCSS, Zustand, shadcn/ui                   |
+| Backend    | Python 3.10, FastAPI, Uvicorn, RQ (Redis Queue) — not Celery           |
+| DB         | SQLite (Phase 1) → PostgreSQL (Phase 2)                                |
+| GPU worker | RunPod serverless, SD 1.5 + ControlNet, FFmpeg                         |
+| Storage    | Cloudflare R2 (S3-compatible, zero egress)                             |
+| Payments   | Payoneer Checkout / Stripe / TipTop Pay — provider TBD, see open risks |
 
 ## Current status
 

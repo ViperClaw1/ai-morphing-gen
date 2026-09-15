@@ -49,6 +49,14 @@ class Settings(BaseSettings):
     enable_xformers: bool = True
     local_files_only: bool = True
 
+    # IP-Adapter FaceID: anchors identity (face embedding) during img2img so
+    # strength/guidance/steps control style change without redrawing the face.
+    ip_adapter_repo: str = "h94/IP-Adapter-FaceID"
+    ip_adapter_weight_name: str = "ip-adapter-faceid_sd15.bin"
+    ip_adapter_scale: float = 0.6
+    insightface_model_name: str = "buffalo_l"
+    insightface_root: Path = Field(default=Path("/app/models/insightface"))
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -58,6 +58,24 @@ snapshot_download(\
     ],\
 )"
 
+# Pre-download IP-Adapter FaceID weights (identity conditioning, see
+# app/core/model_loader.py) and the insightface buffalo_l face-embedding model,
+# same reasoning as the SD1.5 block above: fetch once at build time, run with
+# LOCAL_FILES_ONLY=true at request time.
+RUN python -c "\
+from huggingface_hub import hf_hub_download; \
+hf_hub_download(\
+    'h94/IP-Adapter-FaceID',\
+    'ip-adapter-faceid_sd15.bin',\
+    cache_dir='/app/models',\
+)"
+
+RUN mkdir -p /app/models/insightface \
+    && python -c "\
+from insightface.app import FaceAnalysis; \
+app = FaceAnalysis(name='buffalo_l', root='/app/models/insightface'); \
+app.prepare(ctx_id=-1)"
+
 RUN groupadd --gid 1000 worker \
     && useradd --uid 1000 --gid worker --create-home worker \
     && chown -R worker:worker /app

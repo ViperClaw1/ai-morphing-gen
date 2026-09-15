@@ -10,6 +10,7 @@ from app.core.concurrency import get_inference_lock
 from app.core.model_loader import ModelLoadError
 from app.schemas.requests import RepairParams
 from app.schemas.responses import ErrorDetail, ErrorResponse, RepairData, SuccessResponse
+from app.services.face_embedding import FaceNotDetectedError
 from app.services.image_io import image_to_png_base64
 from app.services.repair_pipeline import CudaOutOfMemoryError, run_repair
 from app.services.timeout_handler import InferenceTimeoutError, run_with_timeout
@@ -80,6 +81,9 @@ async def repair_frame(
                 return await run_repair(validated.image, params, request_id)
 
             result = await run_with_timeout(_execute)
+    except FaceNotDetectedError as exc:
+        log.warning("No face detected | request_id={}", request_id)
+        return _error_response(422, "NO_FACE_DETECTED", str(exc))
     except InferenceTimeoutError as exc:
         log.error("Inference timeout | request_id={}", request_id)
         return _error_response(504, "INFERENCE_TIMEOUT", str(exc))

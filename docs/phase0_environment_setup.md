@@ -9,9 +9,10 @@ Status date: 2026-08-05.
 ## 1. Decisions Locked This Phase
 
 | Decision | Choice | Rationale |
-|---|---|---|
+| --- | --- | --- |
 | Landmark detection | **MediaPipe** | Apache 2.0 license (no commercial-use restriction), CPU-only, 468-point face mesh, no GPU needed for Stage 1-2 warping. |
-| Identity-consistency method | **ControlNet** (canny or openpose conditioning) | No dependency on InsightFace's pretrained embedding models, which are licensed **non-commercial research only** — a real legal exposure for a paid product. IP-Adapter FaceID and InstantID were rejected for MVP on this basis; revisit in Phase 2+ only if a commercially-licensed face-embedding model is sourced. |
+| Identity-consistency method | **IP-Adapter FaceID** (ArcFace embeddings via InsightFace `buffalo_l`) | Supersedes the original ControlNet decision (struck through below) — reversed directly in `gpu_worker` without a documented licensing resolution. `buffalo_l` is licensed **non-commercial research only**; this is an **open, unresolved legal exposure for a paid product**, tracked in `implementation_plan.md`'s risk table, not a cleared decision. Needs a commercial license or a swap back to ControlNet before shipping paid. |
+| ~~Identity-consistency method~~ | ~~**ControlNet** (canny or openpose conditioning)~~ | ~~No dependency on InsightFace's pretrained embedding models... IP-Adapter FaceID and InstantID were rejected for MVP on this basis~~ (superseded — see row above) |
 | Database | **SQLite** for MVP, migrate to Postgres in Phase 2 | Already decided in plan §1.1; fastest to ship, single-file, zero ops overhead pre-launch. |
 | VPS provider | **Hetzner** | Cheapest, EU-based, straightforward for a KZ-registered entity. |
 | Queue | **RQ (Redis Queue)** | Simpler than Celery for a single-VPS MVP. |
@@ -20,7 +21,7 @@ Status date: 2026-08-05.
 Still genuinely open (not blocking env-var setup, tracked separately):
 
 | Item | Status | Next action |
-|---|---|---|
+| --- | --- | --- |
 | Payment processor | Pending support responses | See §4 outreach checklist below |
 | SD1.5 inference benchmark on RTX 3090 | Not yet run | See §5 benchmark spec below |
 | Domain name | Not yet registered | Business decision, no technical blocker |
@@ -53,7 +54,7 @@ These are reference tables for the `.env` files each service will need. The `gpu
 ### 3.1 Backend API (FastAPI + RQ) — `backend/.env` (service not yet scaffolded — Phase 1.1)
 
 | Variable | Example | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `ENV` | `development` \| `production` | |
 | `SQLITE_PATH` | `./data/app.db` | Becomes `POSTGRES_URL` in Phase 2 |
 | `REDIS_URL` | `redis://localhost:6379/0` | RQ broker |
@@ -88,7 +89,7 @@ Existing vars (already in `gpu_worker/.env.example`): `MODEL_ID`, `MODEL_CACHE_D
 New, to add when the ControlNet pipeline is implemented (Phase 1.2):
 
 | Variable | Example | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `CONTROLNET_MODEL_ID` | `lllyasviel/sd-controlnet-canny` (or `-openpose`) | Pick based on which conditioning gives better identity lock in the local validation (step 10) |
 | `CONTROLNET_CONDITIONING_SCALE` | `0.6` | Tune during validation |
 | `LANDMARK_LIB` | `mediapipe` | Informational; MediaPipe ships as a pip package, no separate model download/cache path needed |
@@ -96,7 +97,7 @@ New, to add when the ControlNet pipeline is implemented (Phase 1.2):
 ### 3.3 Frontend (Next.js on Vercel) — `frontend/.env.local` (service not yet scaffolded — Phase 1.3)
 
 | Variable | Example | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `NEXT_PUBLIC_API_BASE_URL` | `https://api.<domain>` | Backend base URL |
 | `NEXT_PUBLIC_R2_PUBLIC_URL` | — | CDN base for serving previews, if R2 public bucket access is used |
 | `NEXT_PUBLIC_SENTRY_DSN` | — | Client-side error tracking |
@@ -105,7 +106,7 @@ New, to add when the ControlNet pipeline is implemented (Phase 1.2):
 ### 3.4 Infra / Deploy-level Secrets (CI or host-level, not app `.env` files)
 
 | Variable | Purpose |
-|---|---|
+| --- | --- |
 | `HETZNER_API_TOKEN` | If provisioning the VPS via API/Terraform rather than manually |
 | VPS SSH key | Deploy access to the Hetzner box |
 | `DOCKER_REGISTRY_URL` / `DOCKER_REGISTRY_TOKEN` | Pushing the `gpu_worker` image for RunPod to pull |

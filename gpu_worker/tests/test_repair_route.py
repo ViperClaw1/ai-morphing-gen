@@ -18,6 +18,7 @@ from PIL import Image
 import app.main as main_module
 from app.core import model_loader as model_loader_module
 from app.core.model_loader import ModelLoadError
+from app.services.face_embedding import FaceNotDetectedError
 from app.services.repair_pipeline import CudaOutOfMemoryError, RepairResult
 from app.services.timeout_handler import InferenceTimeoutError
 
@@ -141,6 +142,24 @@ def test_repair_timeout_returns_504(client, monkeypatch):
 
     assert response.status_code == 504
     assert response.json()["error"]["code"] == "INFERENCE_TIMEOUT"
+
+
+def test_repair_no_face_returns_422(client, monkeypatch):
+    import app.api.routes.inference as inference_module
+
+    async def _raise_no_face(coro_factory, timeout_seconds=None):
+        raise FaceNotDetectedError("No face detected in uploaded image.")
+
+    monkeypatch.setattr(inference_module, "run_with_timeout", _raise_no_face)
+
+    response = client.post(
+        "/repair",
+        files={"image": ("frame.png", _png_bytes(), "image/png")},
+        data={"prompt": "repair this", "seed": "1"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "NO_FACE_DETECTED"
 
 
 def test_repair_cuda_oom_returns_503(client, monkeypatch):

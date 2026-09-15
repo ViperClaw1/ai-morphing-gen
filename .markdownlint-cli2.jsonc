@@ -1,0 +1,8 @@
+{
+  "config": {
+    // Not a convention this repo follows — every existing doc (README.md, CLAUDE.md,
+    // implementation_plan.md, etc.) has lines well past 80 chars. Disabling rather than
+    // reformatting prose to match a standard that was never actually adopted.
+    "MD013": false
+  }
+}
