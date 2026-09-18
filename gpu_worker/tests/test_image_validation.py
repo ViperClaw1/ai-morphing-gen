@@ -29,8 +29,8 @@ def test_decode_valid_png() -> None:
     assert result.height == 64
 
 
-def test_reject_oversized_resolution() -> None:
+def test_allows_large_resolution() -> None:
     data = _png_bytes(1200, 1200)
-    with pytest.raises(ImageValidationError) as exc:
-        decode_and_validate_image(data, "image/png")
-    assert exc.value.code == "UNSUPPORTED_RESOLUTION"
+    result = decode_and_validate_image(data, "image/png")
+    assert result.width == 1200
+    assert result.height == 1200

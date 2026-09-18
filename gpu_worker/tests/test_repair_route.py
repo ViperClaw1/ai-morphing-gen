@@ -18,7 +18,6 @@ from PIL import Image
 import app.main as main_module
 from app.core import model_loader as model_loader_module
 from app.core.model_loader import ModelLoadError
-from app.services.face_embedding import FaceNotDetectedError
 from app.services.repair_pipeline import CudaOutOfMemoryError, RepairResult
 from app.services.timeout_handler import InferenceTimeoutError
 
@@ -104,15 +103,33 @@ def test_repair_rejects_unsupported_mime_type(client):
     assert response.json()["error"]["code"] == "INVALID_IMAGE"
 
 
-def test_repair_rejects_oversized_resolution(client):
+def test_repair_accepts_large_resolution(client, monkeypatch):
+    import app.api.routes.inference as inference_module
+
+    canned = RepairResult(
+        image=Image.new("RGB", (1200, 1200)),
+        seed=1,
+        duration_ms=123,
+        output_width=1200,
+        output_height=1200,
+    )
+
+    async def _fake_run_repair(image, params, request_id):
+        return canned
+
+    async def _passthrough(coro_factory, timeout_seconds=None):
+        return await coro_factory()
+
+    monkeypatch.setattr(inference_module, "run_repair", _fake_run_repair)
+    monkeypatch.setattr(inference_module, "run_with_timeout", _passthrough)
+
     response = client.post(
         "/repair",
         files={"image": ("frame.png", _png_bytes(1200, 1200), "image/png")},
         data={"prompt": "repair this", "seed": "1"},
     )
 
-    assert response.status_code == 400
-    assert response.json()["error"]["code"] == "UNSUPPORTED_RESOLUTION"
+    assert response.status_code == 200
 
 
 def test_repair_rejects_invalid_params(client):
@@ -142,24 +159,6 @@ def test_repair_timeout_returns_504(client, monkeypatch):
 
     assert response.status_code == 504
     assert response.json()["error"]["code"] == "INFERENCE_TIMEOUT"
-
-
-def test_repair_no_face_returns_422(client, monkeypatch):
-    import app.api.routes.inference as inference_module
-
-    async def _raise_no_face(coro_factory, timeout_seconds=None):
-        raise FaceNotDetectedError("No face detected in uploaded image.")
-
-    monkeypatch.setattr(inference_module, "run_with_timeout", _raise_no_face)
-
-    response = client.post(
-        "/repair",
-        files={"image": ("frame.png", _png_bytes(), "image/png")},
-        data={"prompt": "repair this", "seed": "1"},
-    )
-
-    assert response.status_code == 422
-    assert response.json()["error"]["code"] == "NO_FACE_DETECTED"
 
 
 def test_repair_cuda_oom_returns_503(client, monkeypatch):

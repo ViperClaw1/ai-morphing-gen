@@ -9,21 +9,22 @@ This worker receives pre-generated morph frames, repairs artifacts with low-stre
 ## Requirements
 
 | Component | Version / note |
-| ----------- | ---------------- |
+|-----------|----------------|
 | OS | **Ubuntu 22.04** (Linux only) |
 | Python | **3.10** |
 | NVIDIA driver | Compatible with **CUDA 12.1** |
-| PyTorch | **2.3.1+cu121** |
+| PyTorch | **2.4.0+cu121** |
 | Diffusers | **0.30.0** |
 | Tested CUDA | **12.1** (cu121 wheels) |
 
 ### VRAM recommendations
 
 | Resolution | VRAM |
-| ------------ | ------ |
+|------------|------|
 | 512×512 | ~6 GB minimum |
 | 768×768 | ~8 GB |
-| 1024×1024 (max) | **12 GB+** recommended |
+| 1024×1024 | **12 GB+** recommended |
+| Higher resolutions | Scale VRAM accordingly; no hard cap is enforced |
 
 ### Tested GPU models (reference)
 
@@ -121,7 +122,7 @@ cd gpu_worker
 python3.10 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
-pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
+pip install torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu121
 pip install -r requirements.txt
 ```
 
@@ -171,17 +172,13 @@ Model loads **once** at startup. CPU inference is **not** supported.
 
 ## Docker launch
 
-**Native Linux**: requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) installed on the host.
-
-**Windows + Docker Desktop**: no toolkit install needed — GPU passthrough ships with Docker Desktop's WSL2 backend. Just make sure your NVIDIA driver is current (WSL2 CUDA support needs a reasonably recent driver) and that Docker Desktop is set to the WSL2 engine (Settings → General). `--gpus all` below works the same either way.
+Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
 
 ```bash
 cd gpu_worker
 docker build -t ai-morphing-gpu-worker .
 docker run --gpus all -p 8000:8000 --env-file .env.example ai-morphing-gpu-worker
 ```
-
-To point the backend at this local container instead of a RunPod endpoint, set `RUNPOD_ENDPOINT_URL=http://localhost:8000` in `backend/.env` once the backend's GPU-calling code exists (not yet built — see the integration plan).
 
 The image pre-downloads `runwayml/stable-diffusion-v1-5` at **build** time. Runtime uses `local_files_only=true`.
 
@@ -206,7 +203,7 @@ Expected:
 Multipart form fields:
 
 | Field | Type | Required | Default |
-| ------- | ------ | ---------- | --------- |
+|-------|------|----------|---------|
 | `image` | file | yes | — |
 | `prompt` | string | yes | — |
 | `seed` | int | yes | — |
@@ -216,14 +213,14 @@ Multipart form fields:
 | `num_inference_steps` | int | no | `25` |
 
 Accepted image MIME types: `image/jpeg`, `image/png`, `image/webp`.  
-Max upload: **10 MB**. Max dimension: **1024×1024**.
+Max upload: **10 MB**. No resolution cap — image is only resized to be divisible by 8 before inference.
 
 ### Example curl
 
 ```bash
 curl -X POST "http://localhost:8000/repair" \
   -H "X-Request-Id: demo-001" \
-  -F "image=@frame.png" \
+  -F "image=@test_photos/photo1.jpg" \
   -F "prompt=high quality portrait, natural skin, preserve identity and pose, same composition" \
   -F "negative_prompt=blurry, distorted face, deformed, wrong identity" \
   -F "seed=42" \
@@ -232,21 +229,37 @@ curl -X POST "http://localhost:8000/repair" \
   -F "num_inference_steps=25"
 ```
 
-PowerShell (`\` is not a line-continuation character there — use a backtick, or put it on one line):
+To save the result straight to a file instead of eyeballing base64, pipe the response through Python:
 
-```powershell
-curl.exe -X POST "http://localhost:8000/repair" `
-  -H "X-Request-Id: demo-001" `
-  -F "image=@frame.png" `
-  -F "prompt=high quality portrait, natural skin, preserve identity and pose, same composition" `
-  -F "negative_prompt=blurry, distorted face, deformed, wrong identity" `
-  -F "seed=42" `
-  -F "strength=0.2" `
-  -F "guidance_scale=5" `
-  -F "num_inference_steps=25"
+```bash
+curl -s -X POST "http://localhost:8000/repair" \
+  -H "X-Request-Id: demo-001" \
+  -F "image=@test_photos/photo1.jpg" \
+  -F "prompt=high quality portrait, natural skin, preserve identity and pose, same composition" \
+  -F "negative_prompt=blurry, distorted face, deformed, wrong identity" \
+  -F "seed=42" \
+  -F "strength=0.2" \
+  -F "guidance_scale=5" \
+  -F "num_inference_steps=25" \
+  | python -c "import sys,json,base64; d=json.load(sys.stdin); open('out.png','wb').write(base64.b64decode(d['data']['image_base64']))"
 ```
 
-On Windows, use forward slashes in the `@path` even inside PowerShell (`-F "image=@test_photos/photo1.png"`) — curl's `-F` parser treats `\` as an escape character, so a backslash-separated path like `test_photos\photo1.png` gets mangled and curl fails with `curl: (26) Failed to open/read local data from file/application`.
+### Morph type variations
+
+`scripts/generate_morph_variations.sh` drives `/repair` once per morph type against a
+running server and saves each result as `out_<morph_type>.png`. Prompts and strengths
+per morph type are declared as constants (`PROMPTS`, `STRENGTHS`) at the top of the
+script — add a new type there and it's automatically picked up.
+
+```bash
+# All morph types, against test_photos/photo1.jpg, output in the current dir
+./scripts/generate_morph_variations.sh
+
+# Specific image / output dir / subset of morph types
+./scripts/generate_morph_variations.sh test_photos/photo2.jpg out beard smile
+```
+
+Currently defined: `aging`, `angle`, `beard`, `hairstyle`, `smile`.
 
 Success response:
 
@@ -278,8 +291,8 @@ Error response (no stack traces):
 
 ## Expected GPU behavior
 
-1. **Startup**: CUDA check → load SD 1.5 img2img once (fp16, safety checker disabled) → attach IP-Adapter FaceID weights → ready.  
-2. **Per request**: validate image → resize to multiples of 8 → extract face embedding (insightface buffalo_l; 422 `NO_FACE_DETECTED` if no face found) → single GPU job (semaphore) → deterministic `torch.Generator(seed)` with FaceID embedding anchoring identity → PNG base64 → VRAM cleanup (`gc` + `empty_cache`).  
+1. **Startup**: CUDA check → load SD 1.5 img2img once (fp16, safety checker disabled) → ready.  
+2. **Per request**: validate image → resize to multiples of 8 → single GPU job (semaphore) → deterministic `torch.Generator(seed)` → PNG base64 → VRAM cleanup (`gc` + `empty_cache`).  
 3. **Concurrency**: default **1** inference at a time.  
 4. **Timeout**: default **120 s** per request.  
 5. **Long runs**: model stays loaded; cache cleared after each inference.
@@ -289,14 +302,12 @@ Error response (no stack traces):
 ## Troubleshooting
 
 | Symptom | Likely cause | Action |
-| --------- | ---------------- | -------- |
+|---------|----------------|--------|
 | `CUDA is required` on start | No GPU / driver | Install NVIDIA driver; run with `--gpus all` in Docker |
 | `MODEL_LOAD_FAILURE` | Model not in cache | Rebuild image or run snapshot_download with `LOCAL_FILES_ONLY=false` |
-| `CUDA_OOM` | Resolution too high | Use smaller input; ensure 12GB+ for 1024² |
+| `CUDA_OOM` | Resolution too high for available VRAM | Use smaller input; ensure 12GB+ for 1024² |
 | `INFERENCE_TIMEOUT` | Slow GPU or high steps | Lower `num_inference_steps` or increase `INFERENCE_TIMEOUT_SECONDS` |
-| `UNSUPPORTED_RESOLUTION` | Image > 1024 | Downscale before upload |
 | `CORRUPTED_FILE` | Invalid bytes | Re-export frame as PNG/JPEG |
-| `NO_FACE_DETECTED` | insightface found no face in the image | Use a clearer, front-facing photo |
 | xFormers warning | Wheel mismatch | Service still runs; fix torch/xformers versions per requirements |
 
 ### Run tests (no GPU required)
@@ -325,7 +336,6 @@ See `.env.example` for all settings. Key variables:
 - `LOCAL_FILES_ONLY` — `true` in production (after model download)  
 - `MAX_CONCURRENT_INFERENCE` — default `1`  
 - `INFERENCE_TIMEOUT_SECONDS` — default `120`  
-- `IP_ADAPTER_SCALE` — default `0.6` (higher = stronger identity lock, less prompt influence)  
 
 ---
 

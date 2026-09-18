@@ -1,5 +1,5 @@
 # AI Morphing Generator MVP — GPU Worker
-# Target: Ubuntu 22.04 + CUDA 12.1 + PyTorch 2.3.1 (cu121)
+# Target: Ubuntu 22.04 + CUDA 12.1 + PyTorch 2.4.0 (cu121)
 
 FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
 
@@ -26,7 +26,7 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 
 RUN pip install --upgrade pip \
-    && pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121 \
+    && pip install torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu121 \
     && pip install -r /app/requirements.txt
 
 COPY app /app/app
@@ -57,24 +57,6 @@ snapshot_download(\
         'feature_extractor/*.json',\
     ],\
 )"
-
-# Pre-download IP-Adapter FaceID weights (identity conditioning, see
-# app/core/model_loader.py) and the insightface buffalo_l face-embedding model,
-# same reasoning as the SD1.5 block above: fetch once at build time, run with
-# LOCAL_FILES_ONLY=true at request time.
-RUN python -c "\
-from huggingface_hub import hf_hub_download; \
-hf_hub_download(\
-    'h94/IP-Adapter-FaceID',\
-    'ip-adapter-faceid_sd15.bin',\
-    cache_dir='/app/models',\
-)"
-
-RUN mkdir -p /app/models/insightface \
-    && python -c "\
-from insightface.app import FaceAnalysis; \
-app = FaceAnalysis(name='buffalo_l', root='/app/models/insightface'); \
-app.prepare(ctx_id=-1)"
 
 RUN groupadd --gid 1000 worker \
     && useradd --uid 1000 --gid worker --create-home worker \

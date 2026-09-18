@@ -17,10 +17,11 @@ class ModelLoadError(RuntimeError):
 class ModelLoader:
     """Singleton Stable Diffusion 1.5 img2img pipeline loader.
 
-    Loads the base img2img pipeline, then attaches IP-Adapter FaceID weights so
-    the face embedding computed in app/services/face_embedding.py can anchor
-    identity during denoising — see app/services/repair_pipeline.py for where
-    that embedding gets passed into the pipeline call.
+    Plain img2img only — no ControlNet conditioning yet, though
+    docs/phase0_environment_setup.md already locked ControlNet (canny/openpose)
+    as the identity-consistency method for 1.2. Tracked as a follow-up, not
+    implemented here: swapping to StableDiffusionControlNetImg2ImgPipeline needs
+    a conditioning-image preprocessor, a new dependency, and new request params.
     """
 
     _instance: "ModelLoader | None" = None
@@ -85,16 +86,6 @@ class ModelLoader:
                     log.info("xFormers memory efficient attention enabled")
                 except Exception as exc:
                     log.warning("xFormers unavailable: {}", exc)
-
-            pipeline.load_ip_adapter(
-                cfg.ip_adapter_repo,
-                subfolder=None,
-                weight_name=cfg.ip_adapter_weight_name,
-                image_encoder_folder=None,
-                local_files_only=cfg.local_files_only,
-            )
-            pipeline.set_ip_adapter_scale(cfg.ip_adapter_scale)
-            log.info("IP-Adapter FaceID weights loaded | scale={}", cfg.ip_adapter_scale)
 
             self._pipeline = pipeline
             self._load_duration_ms = int((time.perf_counter() - start) * 1000)

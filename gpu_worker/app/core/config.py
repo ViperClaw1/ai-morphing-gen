@@ -10,10 +10,6 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
-        # This Settings class has real fields starting with "model_" (model_id,
-        # model_variant, model_cache_dir) — clear pydantic's own reserved "model_"
-        # namespace so it stops warning about the collision.
-        protected_namespaces=(),
     )
 
     app_name: str = "AI Morphing GPU Worker"
@@ -38,7 +34,6 @@ class Settings(BaseSettings):
     )
 
     max_upload_bytes: int = 10 * 1024 * 1024
-    max_inference_dimension: int = 1024
     resize_divisor: int = 8
 
     max_concurrent_inference: int = 1
@@ -48,14 +43,6 @@ class Settings(BaseSettings):
     dtype: str = "float16"
     enable_xformers: bool = True
     local_files_only: bool = True
-
-    # IP-Adapter FaceID: anchors identity (face embedding) during img2img so
-    # strength/guidance/steps control style change without redrawing the face.
-    ip_adapter_repo: str = "h94/IP-Adapter-FaceID"
-    ip_adapter_weight_name: str = "ip-adapter-faceid_sd15.bin"
-    ip_adapter_scale: float = 0.6
-    insightface_model_name: str = "buffalo_l"
-    insightface_root: Path = Field(default=Path("/app/models/insightface"))
 
 
 @lru_cache

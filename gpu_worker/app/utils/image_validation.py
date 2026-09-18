@@ -80,21 +80,11 @@ def decode_and_validate_image(data: bytes, mime_type: str) -> ValidatedImage:
 
     rgb = pil_image.convert("RGB")
     width, height = rgb.size
-    settings = get_settings()
 
     if width < 8 or height < 8:
         raise ImageValidationError(
             "INVALID_IMAGE",
             "Image dimensions are too small (minimum 8x8).",
-        )
-
-    if width > settings.max_inference_dimension or height > settings.max_inference_dimension:
-        raise ImageValidationError(
-            "UNSUPPORTED_RESOLUTION",
-            (
-                f"Image resolution {width}x{height} exceeds maximum "
-                f"{settings.max_inference_dimension}x{settings.max_inference_dimension}."
-            ),
         )
 
     return ValidatedImage(image=rgb, width=width, height=height, mime_type=mime_type)

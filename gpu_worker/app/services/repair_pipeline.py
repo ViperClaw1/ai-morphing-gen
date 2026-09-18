@@ -8,7 +8,6 @@ from loguru import logger
 from app.core.config import get_settings
 from app.core.model_loader import ModelLoadError, get_model_loader
 from app.schemas.requests import RepairParams
-from app.services.face_embedding import get_face_embedder
 from app.services.image_resize import resize_for_inference
 from app.services.memory_cleanup import cleanup_after_inference
 from app.utils.cuda_utils import get_vram_usage_mb
@@ -38,10 +37,6 @@ def _run_inference_sync(
 
     resized, (out_w, out_h) = resize_for_inference(image)
 
-    face_embeds = get_face_embedder().get_embedding(image).to(
-        device=settings.device, dtype=pipeline.unet.dtype
-    )
-
     generator = torch.Generator(device=settings.device).manual_seed(params.seed)
 
     output = None
@@ -56,7 +51,6 @@ def _run_inference_sync(
                 guidance_scale=params.guidance_scale,
                 num_inference_steps=params.num_inference_steps,
                 generator=generator,
-                ip_adapter_image_embeds=[face_embeds],
             )
             result_image = output.images[0].convert("RGB")
     except torch.cuda.OutOfMemoryError as exc:
